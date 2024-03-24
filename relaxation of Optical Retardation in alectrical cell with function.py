@@ -31,9 +31,9 @@ def find_drop(I,plot_deriv,plot_begin) :
 
     begin_drop = 0
 
-    threshold = 0.75*max(np.abs(derivative[5:len(derivative)-30])) # the 5 and 30 are there because it happens that there are weird artifacts at the first and last frames
+    threshold = 0.50*max(np.abs(derivative[5:len(derivative)-30])) # the 5 and 30 are there because it happens that there are weird artifacts at the first and last frames
     for d in range(10,len(derivative)):
-        if np.abs(derivative[d]) > threshold :
+        if derivative[d] < -threshold :
             begin_drop = d
             break
     
@@ -133,7 +133,7 @@ def perform_st_exp_fit(t,OR,begin_drop,fit_len,plot_fit):
     t_fit = t[begin_drop : begin_drop + fit_len]-t[begin_drop]
     OR_fit = OR[begin_drop : begin_drop + fit_len] #- OR[len(OR)-1]
 
-    initial_guesses = [b_0, 1]
+    initial_guesses = [b_0, 20]
 
     # Perform the exponential fit on the subset
     params, covariance = curve_fit(st_exponential, t_fit, OR_fit,maxfev = 50000, p0=initial_guesses)
@@ -175,18 +175,19 @@ def perform_st_exp_fit(t,OR,begin_drop,fit_len,plot_fit):
         plt.ylabel('optical retardation')
         plt.legend(loc = 'best')
         plt.grid()
-        plt.title(file_path)
+        plt.title(title)
+        plt.savefig(savepath)
         plt.show()
 
     return([b_fit/6, alpha_fit, err_b/6, err_alpha])
 
 ########### DATASET Specify the file path
 
-par_pol_path = 'C:\\Users\\marc3\\OneDrive\\Documents\\INTERNSHIP-PHD\\QILINs SAMPLES\\QZ70nondil\\img0.tif'  # replace with the actual file path
+par_pol_path = 'C:\\Users\\marc3\\OneDrive\\Documents\\INTERNSHIP-PHD\\3-21-24 MB03x100\\img0.tif'  # replace with the actual file path
 
 ## The 
 # Specify the folder path where the files are located
-folder_path = 'C:\\Users\\marc3\\OneDrive\\Documents\\INTERNSHIP-PHD\\QILINs SAMPLES\\QZ70nondil'  # Update with the actual path
+folder_path = 'C:\\Users\\marc3\\OneDrive\\Documents\\INTERNSHIP-PHD\\3-21-24 MB03x100'  # Update with the actual path
 
 # Define the pattern for file names 
 file_pattern = 'relax*.tif'        
@@ -200,11 +201,10 @@ file_paths = glob.glob(full_path_pattern)
 
 ############ PARAMETERS and settings
 ### GENERAL (also parallel pol) #########
-show_patch           = True   #plugged in the intensity_in_image function
+show_patch           = False   #plugged in the intensity_in_image function
 visualize_derivative = False   #plugged in the find_drop function
-visualize_drop       = True
-   #plugged in the find_drop function
-visualize_dataset    = True   #to visualize the data nd verify the automatic measure worked
+visualize_drop       = False   #plugged in the find_drop function
+visualize_dataset    = False   #to visualize the data nd verify the automatic measure worked
 visualize_fit        = True   #pluggd in the perform_exp_fit function
 height_delimeters = [.4, .6]
 I_0 = intensity_in_image(par_pol_path, height_delimeters, show_patch)
@@ -222,7 +222,7 @@ num = 0
 for file_path in file_paths:
     
     print('examining ',file_path, f'\n{num} {num} {num} {num} {num} {num} {num} {num} {num}')
-    num += 1
+    
     ### SPECIFIC TO SINGLE RELAXATION #######    
     I = intensity_in_multipage_image(file_path, height_delimeters)
     frames = np.arange(len(I))
@@ -252,16 +252,18 @@ for file_path in file_paths:
     ##############################################################
 
 
-
-
-
+    
     ######### PERFORM A STRETCHED EXPONENTIAL FIT
+    title = os.path.splitext(os.path.basename(file_path)) #is used in the function
+    title = title [0]
+    savepath =  os.path.join(folder_path, title)
     [d, a, err_d, err_a] = perform_st_exp_fit(t,OR,begin_drop,fit_len,visualize_fit) # d and a are D and alpha
     D.append(d)
     alpha.append(a)
     err_D.append(err_d)
     err_alpha.append(err_a)
 
+    num += 1
     print('\n')
     
 
@@ -282,7 +284,7 @@ plt.legend()
 plt.show()
 
 
-## calculate the mean values of d and alpha and plot them 
+## * calculate the mean values of d and alpha and plot them 
 D = np.array(D)
 err_D = np.array(err_D)
 alpha = np.array (alpha)
@@ -300,16 +302,17 @@ covariance_matrix_alpha = np.cov(alpha, rowvar=False)
 alpha_avg = np.sum(alpha * err_alpha) / np.sum(err_alpha)
 err_alpha_avg = np.sqrt(np.sum((err_alpha ** 2) * variance_alpha) + 2 * np.dot(err_alpha, np.dot(covariance_matrix_alpha, err_alpha)))
 
-
+title_Da = 'D and alpha'
+title_Da = os.path.join(folder_path,title_Da)
 fig, ax1 = plt.subplots()
 ax2 = ax1.twinx()
 for i in range(len(D)):
     ax1.errorbar(i+1,D[i], yerr=err_D[i], fmt='-', color = 'b' ,marker = '$D$')
     ax2.errorbar(i+1,alpha[i], yerr=err_alpha[i], fmt='-', color = 'r', marker = r'$\alpha$')
-ax1.axhline(D_avg, color = 'b')
+ax1.axhline(D_avg, color = 'b', label = rf'D = {D_avg}')
 ax1.axhline(D_avg+err_D_avg/2, color = 'b', linestyle = '--')
 ax1.axhline(D_avg-err_D_avg/2, color = 'b', linestyle = '--')
-ax2.axhline(alpha_avg, color = 'r')
+ax2.axhline(alpha_avg, color = 'r', label = rf'$\alpha$ = {alpha_avg}')
 ax2.axhline(alpha_avg+err_alpha_avg/2, color = 'r', linestyle = '--')
 ax2.axhline(alpha_avg-err_alpha_avg/2, color = 'r', linestyle = '--')
 ax2.set_ylim(0.5*min(alpha),1.1*max(alpha)) 
@@ -317,5 +320,8 @@ ax2.set_ylim(0.9*min(alpha),1.3*max(alpha))
 ax1.set_ylabel(r'rotational diffusion coefficient D [s$^{-1}$]')
 ax2.set_ylabel(r'exponent $\alpha$')
 plt.grid()
+ax1.legend(loc = 'upper right')
+ax2.legend(loc = 'lower right')
+plt.savefig(title_Da)
 plt.show()
 
