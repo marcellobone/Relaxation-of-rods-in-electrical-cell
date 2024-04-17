@@ -34,7 +34,6 @@ def find_drop(I,plot_deriv,plot_begin) :
     for d in range(10,int(len(derivative)/2)):
         if (derivative[d]) < threshold :
             dive = I_smooth[d]-I_smooth[d+int(0.1*len(I_smooth))]
-            print(d,dive/(0.2*drop))
             if  dive > 0.2*drop :
                 begin_drop = d
                 break
