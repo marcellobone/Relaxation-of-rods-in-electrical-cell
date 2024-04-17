@@ -22,23 +22,24 @@ def find_drop(I,plot_deriv,plot_begin) :
     #plt.show()
 
 
-    # increase the high value and decrease the low ones
-
     derivative = np.gradient(I_smooth)
-    derivative = derivative**5
-
-    # find the begin of drop l;ooking at the derivative
-
-    begin_drop = 0
-
-    threshold = 0.50*max(np.abs(derivative[5:len(derivative)-30])) # the 5 and 30 are there because it happens that there are weird artifacts at the first and last frames
-    for d in range(10,len(derivative)):
-        if derivative[d] < -threshold :
-            begin_drop = d
-            break
+    derivative = derivative**3  # increase the high value and decrease the low ones
     
-    #print('drop begins at ',begin_drop ,' or ',begin_drop/fps,'s')
-
+    derivative = [ min(derivative[i],0) for i in range(len(derivative)) ] # filter out the positive values
+   
+    # find the begin of drop looking at the derivative
+    begin_drop = 0 
+    threshold = -0.1*max(np.abs(derivative[5:int( 0.5*len(derivative) )])) # the 5 and 30 are there because it happens that there are weird artifacts at the first and last frames
+   
+    for d in range(10,int(len(derivative)/2)):
+        if (derivative[d]) < threshold :
+            dive = I_smooth[d]-I_smooth[d+int(0.1*len(I_smooth))]
+            print(d,dive/(0.2*drop))
+            if  dive > 0.2*drop :
+                begin_drop = d
+                break
+    
+    # print('drop begins at ',begin_drop ,' or ',begin_drop/fps,'s')
     if plot_deriv == True :
         plt.plot(derivative , marker = '.')
         plt.title('derivative')
