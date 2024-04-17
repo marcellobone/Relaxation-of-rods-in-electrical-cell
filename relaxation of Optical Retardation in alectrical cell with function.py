@@ -210,10 +210,6 @@ visualize_fit        = True   #pluggd in the perform_exp_fit function
 height_delimeters = [.4, .6]
 I_0 = intensity_in_image(par_pol_path, height_delimeters, show_patch)
 
-
-# Print the list of file paths
-
-
 n = 0
 D = []
 alpha = []
