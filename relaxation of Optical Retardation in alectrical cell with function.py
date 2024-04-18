@@ -181,6 +181,20 @@ def perform_st_exp_fit(t,OR,begin_drop,fit_len,plot_fit):
 
     return([b_fit/6, alpha_fit, err_b/6, err_alpha])
 
+def weighted_avg_and_std(values, weights):
+    """
+    Return the weighted average and standard deviation.
+
+    They weights are in effect first normalized so that they 
+    sum to 1 (and so they must not all be 0).
+
+    values, weights -- NumPy ndarrays with the same shape.
+    """
+    average = np.average(values, weights=weights)
+    # Fast and numerically precise:
+    variance = np.average((values-average)**2, weights=weights)
+    return (average, np.sqrt(variance))
+
 ########### DATASET Specify the file path
 
 par_pol_path = 'C:\\Users\\marc3\\OneDrive\\Documents\\INTERNSHIP-PHD\\3-21-24 MB03x100\\img0.tif'  # replace with the actual file path
@@ -286,17 +300,9 @@ err_D = np.array(err_D)
 alpha = np.array (alpha)
 err_alpha = np.array(err_alpha)
 
-variance_D = np.var(D)
-covariance_matrix_D = np.cov(D, rowvar=False)
+D_avg, err_D_avg =  weighted_avg_and_std(D, err_D)
 
-D_avg = np.sum(D * err_D) / np.sum(err_D)
-err_D_avg = np.sqrt(np.sum((err_D ** 2) * variance_D) + 2 * np.dot(err_D, np.dot(covariance_matrix_D, err_D)))
-
-variance_alpha = np.var(alpha)
-covariance_matrix_alpha = np.cov(alpha, rowvar=False)
-
-alpha_avg = np.sum(alpha * err_alpha) / np.sum(err_alpha)
-err_alpha_avg = np.sqrt(np.sum((err_alpha ** 2) * variance_alpha) + 2 * np.dot(err_alpha, np.dot(covariance_matrix_alpha, err_alpha)))
+alpha_avg, err_alpha_avg = weighted_avg_and_std(alpha, err_alpha)
 
 title_Da = 'D and alpha'
 title_Da = os.path.join(folder_path,title_Da)
