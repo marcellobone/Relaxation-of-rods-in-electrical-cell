@@ -39,21 +39,16 @@ def find_drop(I,threshold_perc,dive_perc,plot_deriv,plot_begin) : # finds the be
     """
     # smoothening data to have cleaner derivative
     I_smooth = []
-    d = 5
+    d = 10
     for i in range(d,len(I)-d) : 
         I_smooth.append(( np.mean(I[i-d:i+d])))
     
     drop = max(I_smooth) - min(I_smooth)
-    #plt.plot(frames,I,marker = '.')      ## uncomment to verify smoothening went well
+    #plt.plot(frames,I,marker = '.')      
     #plt.plot(I_smooth)
     #plt.show()
 
-
-    # increase the high value and decrease the low ones
-
     derivative = np.gradient(I_smooth)
-    derivative = derivative**5
-    
     derivative = [ min(derivative[i],0) for i in range(len(derivative)) ]
    
     # find the begin of drop l;ooking at the derivative

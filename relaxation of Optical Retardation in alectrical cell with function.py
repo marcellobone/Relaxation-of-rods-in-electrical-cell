@@ -44,6 +44,9 @@ visualize_fit        = True   #pluggd in the perform_exp_fit function
 height_delimeters = [.2, .6]
 I_0 = 10*intensity_in_image(par_pol_path, height_delimeters, show_patch)
 time_of_recording = 5 #in seconds s
+#PARAMETERS for find_drop: (see function description)
+threshold = 0.75 #threshold in percentage to find drop higher for noisy data
+dive = 0.2 #dive in percentaage wrt the drop
 
 # %%
 n = 0
@@ -76,7 +79,7 @@ for file_path in file_paths:
     #OR = I
 
 
-    begin_drop = find_drop(I,visualize_derivative,visualize_drop) # pos in the array at which the drop starts
+    begin_drop = find_drop(I,threshold,dive,visualize_derivative,visualize_drop) # pos in the array at which the drop starts
     print('drop begins at ',begin_drop ,' or ',begin_drop/fps,'s')
 
     fit_len = int(0.6 * (len(OR) - begin_drop ))  #lenght of the fit
