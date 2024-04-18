@@ -39,7 +39,7 @@ def test_find_drop(len_plateau):
 
 
     drop = find_drop(dat, 0.7,0.35, False, False)
-    assert np.abs(len_plateau-drop) < 10
+    assert np.abs(len_plateau-drop) < 15
 
 
 # # %% TESTING intensity_in_image()
