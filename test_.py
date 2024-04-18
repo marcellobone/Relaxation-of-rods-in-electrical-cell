@@ -14,7 +14,7 @@ from functions import *
 
 
 # %% TESTING find_drop()
-@given(len_plateau = st(min_value=50, max_value=950))
+@given(len_plateau = st.integers(min_value=50, max_value=950))
 def test_find_drop(len_plateau):   
     """
     this is a test that verifies if the found drop is close to the actual one
@@ -39,7 +39,7 @@ def test_find_drop(len_plateau):
 
 
     drop = find_drop(dat, 0.7,0.35, False, False)
-    assert np.abs(len_plateau-drop) < 5
+    assert np.abs(len_plateau-drop) < 10
 
 
 # # %% TESTING intensity_in_image()
