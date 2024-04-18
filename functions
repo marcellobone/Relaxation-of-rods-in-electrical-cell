@@ -7,7 +7,8 @@ from scipy.optimize import curve_fit
 import os
 import glob
 
-def find_drop(I,plot_deriv,plot_begin) : # finds the beginning of the drop of the exponential-like dataset
+########### FUNCTIONS 
+def find_drop(I,threshold_perc,dive_perc,plot_deriv,plot_begin) : # finds the beginning of the drop of the exponential-like dataset
     """
     the function first smoothens the data in order to reduce noise. 
     It does this by averaging every point with its first d neighbours.
@@ -30,7 +31,8 @@ def find_drop(I,plot_deriv,plot_begin) : # finds the beginning of the drop of th
      I --array a dataset of exponential like points 
      plot_deriv --boolean indicating if you want to plot the derivative
      plot_begin --boolean indicating if you want to plot the drop
-
+     threshold_perc --float threshold in percentaage wrt the max derivaative
+     dive_perc --float dive in perchentage wrt the drop
     Outputs:
      begin_drop --int index at which the drop begins
     
@@ -50,7 +52,7 @@ def find_drop(I,plot_deriv,plot_begin) : # finds the beginning of the drop of th
     # increase the high value and decrease the low ones
 
     derivative = np.gradient(I_smooth)
-    derivative = derivative**3
+    derivative = derivative**5
     
     derivative = [ min(derivative[i],0) for i in range(len(derivative)) ]
    
@@ -58,11 +60,11 @@ def find_drop(I,plot_deriv,plot_begin) : # finds the beginning of the drop of th
 
     begin_drop = 0
 
-    threshold = -0.1*max(np.abs(derivative[5:int( 0.5*len(derivative) )])) # the 5 and 30 are there because it happens that there are weird artifacts at the first and last frames
+    threshold = -threshold_perc*max(np.abs(derivative[5:int( 0.5*len(derivative) )])) # the 5 and 30 are there because it happens that there are weird artifacts at the first and last frames
     for d in range(10,int(len(derivative)/2)):
         if (derivative[d]) < threshold :
             dive = I_smooth[d]-I_smooth[d+int(0.1*len(I_smooth))]
-            if  dive > 0.2*drop :
+            if  dive > dive_perc*drop :
                 begin_drop = d
                 break
     
@@ -84,11 +86,27 @@ def find_drop(I,plot_deriv,plot_begin) : # finds the beginning of the drop of th
 
 def intensity_in_image(path, height_delimeter, show_patch) : # calculate the intensity in an tif image inside a ROI
 
+    """
+    It calculates the average values of the pixel inside a region of interest of a tif image.
+    Keep in mind that the borders of the region of interest are rounded down to an int
+    so it is better to give stricter values for the uper limit of the ROI
+
+    Inputs:
+     path --string path to the image
+     height_delimeters --float percentaage (in 0 to 1) of heigth at which to place the upper and lower bounds
+              of the ROI. NOTE that the yaxis is reversed and the fist number should be the lowest
+     show_patch --boolean if true plots the ROI over the image  
+
+    Output:
+     I_0 --float vaalue of the average pixel in the ROI       
+    """
+
     with Image.open(path) as par_pol :
         # Convert the Pillow image to a NumPy array (OpenCV format)
         par_pol_np = np.array(par_pol)
         width, height = par_pol.size
-
+        width-=1
+        height-=1
         print(f'w = {width}   h = {height}')
         # Define the region of interest (ROI) coordinates (left, upper, right, lower)
         roi_coordinates = (0, int(height_delimeter[0]*height) , width , int(height_delimeter[1]*height ))
@@ -129,6 +147,13 @@ def intensity_in_multipage_image(path,height_delimeter) : # finds the average in
     a list of two numbers determining the height limits of the region of interest
     in percentage with respect to the total height.
     It returns the average value of the pixel inside the ROI
+
+    Inputs: 
+     path --string with path to the multi page tif
+     heigth_delimeters --float percentaage (in 0 to 1) of heigth at which to place the upper and lower bounds
+              of the ROI. NOTE that the yaxis is reversed and the fist number should be the lowest
+    Output:
+     I --arrray contaaining the average value of the pixels in the ROI of per every page in the multi page tif.
     """
 
     image = Image.open(path)
@@ -177,6 +202,7 @@ def perform_st_exp_fit(t,OR,begin_drop,fit_len, st_exponential, plot_fit, fps, t
         title --string title  of plot        }
 
     Outputs fitted values:
+     list containing:
         D --float with value b/6
         err_D --float error on D
         alpha --float
