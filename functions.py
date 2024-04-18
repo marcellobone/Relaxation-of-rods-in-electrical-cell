@@ -13,9 +13,6 @@ def find_drop(I,threshold_perc,dive_perc,plot_deriv,plot_begin) : # finds the be
     the function first smoothens the data in order to reduce noise. 
     It does this by averaging every point with its first d neighbours.
     d is a fixed parameter inn the function
-    Then it performs the derivaarive and  it looks for the negative peaks of 
-    the derivative. The ladder is elevated to a power in order to lower the small peaks 
-    with respect to the  bigger ones.
     Then a threshold is set to be 10% of the maximum peak. This can need to be changed in
     very noisy datasets ot datasets with some aberration.
     At every peak lower than the threshold the function cheks if there is an 
@@ -164,7 +161,7 @@ def intensity_in_multipage_image(path,height_delimeter) : # finds the average in
 
     I = []
     for page in range(num_pages):
-        selected_page = image.seek(page)
+        image.seek(page)
         selected_page_image = image.copy()
 
         # Convert the Pillow image to a NumPy array (OpenCV format)
