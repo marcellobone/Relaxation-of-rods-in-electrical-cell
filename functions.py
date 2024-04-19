@@ -36,11 +36,11 @@ def find_drop(I,threshold_perc,dive_perc,plot_deriv,plot_begin) : # finds the be
     """
     # smoothening data to have cleaner derivative
     I_smooth = []
-    d = 10
+    d = 5
     for i in range(d,len(I)-d) : 
         I_smooth.append(( np.mean(I[i-d:i+d])))
     
-    drop = max(I_smooth) - min(I_smooth)
+   
     #plt.plot(frames,I,marker = '.')      
     #plt.plot(I_smooth)
     #plt.show()
@@ -53,12 +53,20 @@ def find_drop(I,threshold_perc,dive_perc,plot_deriv,plot_begin) : # finds the be
     begin_drop = 0
 
     threshold = -threshold_perc*max(np.abs(derivative[5:int( 0.5*len(derivative) )])) # the 5 and 30 are there because it happens that there are weird artifacts at the first and last frames
+    possible_peak = []
     for d in range(10,int(len(derivative)/2)):
         if (derivative[d]) < threshold :
-            dive = I_smooth[d]-I_smooth[d+int(0.1*len(I_smooth))]
-            if  dive > dive_perc*drop :
-                begin_drop = d
-                break
+            possible_peak.append(d)
+    print(possible_peak)
+    for pp in possible_peak:
+        if np.abs( I[pp]- I_smooth[pp+50] ) > np.abs( I[begin_drop] - I_smooth[begin_drop+50] ): 
+            begin_drop = pp
+            
+            
+            #dive = I_smooth[d]-I_smooth[d+int(0.1*len(I_smooth))]
+            #if  dive > dive_perc*drop :
+             #   begin_drop = d
+              #  break
     
     
     #print('drop begins at ',begin_drop ,' or ',begin_drop/fps,'s')
