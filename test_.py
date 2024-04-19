@@ -105,7 +105,7 @@ def test_find_drop_noise(level):
 
 
 
- TESTING intensity_in_image()
+#TESTING intensity_in_image()
 
 @given(int = st.integers(min_value=0, max_value=200))
 def test_intensityi_in_image(int):
