@@ -45,8 +45,7 @@ height_delimeters = [.2, .6]
 I_0 = 10*intensity_in_image(par_pol_path, height_delimeters, show_patch)
 time_of_recording = 5 #in seconds s
 #PARAMETERS for find_drop: (see function description)
-threshold = 0.75 #threshold in percentage to find drop higher for noisy data
-dive = 0.2 #dive in percentaage wrt the drop
+threshold = 0.5 #threshold in percentage to find drop higher for noisy data
 
 # %%
 n = 0
@@ -79,12 +78,12 @@ for file_path in file_paths:
     #OR = I
 
 
-    begin_drop = find_drop(I,threshold,dive,visualize_derivative,visualize_drop) # pos in the array at which the drop starts
+    begin_drop = find_drop(I,threshold,visualize_derivative,visualize_drop) # pos in the array at which the drop starts
     print('drop begins at ',begin_drop ,' or ',begin_drop/fps,'s')
 
     fit_len = int(0.6 * (len(OR) - begin_drop ))  #lenght of the fit
     b_0 = 10
-    c_0 = np.mean(OR[begin_drop+fit_len-25 : begin_drop+fit_len] )  #OR[len(OR)-1] OR[begin_drop+fit_len]  max(OR)
+    c_0 = np.mean(OR[len(OR)-30:len(OR)-25] )  #OR[len(OR)-1] OR[begin_drop+fit_len]  max(OR)
     a_0 = np.mean(OR[1:begin_drop] ) - c_0
 
     ##############################################################
@@ -145,8 +144,8 @@ ax1.axhline(D_avg-err_D_avg/2, color = 'b', linestyle = '--')
 ax2.axhline(alpha_avg, color = 'r', label = rf'$\alpha$ = {alpha_avg}')
 ax2.axhline(alpha_avg+err_alpha_avg/2, color = 'r', linestyle = '--')
 ax2.axhline(alpha_avg-err_alpha_avg/2, color = 'r', linestyle = '--')
-ax2.set_ylim(0.5*min(alpha),1.1*max(alpha)) 
-ax2.set_ylim(0.9*min(alpha),1.3*max(alpha))
+ax1.set_ylim(0.5*min(D),1.1*max(D)) 
+ax2.set_ylim(0.9*min(alpha),1)
 ax1.set_ylabel(r'rotational diffusion coefficient D [s$^{-1}$]')
 ax2.set_ylabel(r'exponent $\alpha$')
 plt.grid()

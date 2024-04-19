@@ -33,12 +33,12 @@ def test_find_drop(len_plateau):
     dat = np.append(plateau,exp)
 
     # add noise 
-    level = 0.05
+    level = 0.1
     noise = np.random.normal(0, level, len(dat))
     dat = dat + noise
 
 
-    drop = find_drop(dat, 0.7,0.35, False, False)
+    drop = find_drop(dat, 0.7, False, False)
     assert np.abs(len_plateau-drop) < 15
 
 

@@ -8,7 +8,7 @@ import os
 import glob
 
 ########### FUNCTIONS 
-def find_drop(I,threshold_perc,dive_perc,plot_deriv,plot_begin) : # finds the beginning of the drop of the exponential-like dataset
+def find_drop(I,threshold_perc,plot_deriv,plot_begin) : # finds the beginning of the drop of the exponential-like dataset
     """
     the function first smoothens the data in order to reduce noise. 
     It does this by averaging every point with its first d neighbours.
@@ -37,8 +37,8 @@ def find_drop(I,threshold_perc,dive_perc,plot_deriv,plot_begin) : # finds the be
     # smoothening data to have cleaner derivative
     I_smooth = []
     d = 5
-    for i in range(d,len(I)-d) : 
-        I_smooth.append(( np.mean(I[i-d:i+d])))
+    for i in range(d,len(I)-d-1) : 
+        I_smooth.append(( np.mean(I[i-d:i+d+1])))
     
    
     #plt.plot(frames,I,marker = '.')      
