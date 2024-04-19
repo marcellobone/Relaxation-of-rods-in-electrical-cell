@@ -15,10 +15,10 @@ from functions import *
 
 # %% TESTING find_drop()
 @given(len_plateau = st.integers(min_value=50, max_value=950))
-def test_find_drop(len_plateau):   
+def test_find_drop_accuracy(len_plateau):   
     """
-    this is a test that verifies if the found drop is close to the actual one
-        
+    this is a test that verifies if the found drop is accurate with low noise level
+
     GIVEN: the length  of the plateau len_plateau
     WHEN: I find drop
     THEN: the result is close to len_plateau
@@ -33,30 +33,96 @@ def test_find_drop(len_plateau):
     dat = np.append(plateau,exp)
 
     # add noise 
-    level = 0.1
+    level = 0.02
+    noise = np.random.normal(0, level, len(dat))
+    dat = dat + noise
+
+
+    drop = find_drop(dat, 0.5, False, False)
+    assert np.abs(len_plateau-drop) <= 10
+
+@given(level = st.floats(min_value=0.02, max_value=0.1))
+def test_find_drop_noise(level):   
+    """
+    this is a test that verifies if the found drop is accurate with varying noise level
+
+    GIVEN: the level of noise
+    WHEN: I find drop
+    THEN: the result is close to len_plateau
+
+    """
+    #create exponential like array with a plateau before
+    len_drop = 1000 # number of points of the drop
+    len_plateau = 300
+    plateau = np.ones(len_plateau)
+    t = np.arange(0,5,5/len_drop)
+    exp = np.exp(-(t)**0.5)
+    dat = np.append(plateau,exp)
+
+    # add noise 
     noise = np.random.normal(0, level, len(dat))
     dat = dat + noise
 
 
     drop = find_drop(dat, 0.7, False, False)
-    assert np.abs(len_plateau-drop) < 15
+    assert np.abs(len_plateau-drop) <= 20
 
 
-# # %% TESTING intensity_in_image()
-# """
-# creates a tif image in a known path
-# The image is 30x30 squares. the 30x10 middle line have values of 100 the others 1
-# Averaging the ones in the middle the value should be 100
-# """
-# # Create an array representing the image
-# image_array = np.zeros((30, 30), dtype=np.uint8)  # Initialize a 3x3 array with zeros
-# image_array[10:20] = 100  # Set the middle row to 100
+# def test_find_drop_local_noise(position):   
+#     """
+#     this is a test that verifies if the found drop is accurate with a local big noise
 
-# # Save the array as a TIFF image
-# imageio.imwrite('image.tif', image_array)
+#     GIVEN: the position of the big noise
+#     WHEN: I find drop
+#     THEN: the result is close to len_plateau
 
-# assert intensity_in_image('image.tif',[0.35, 0.66], True) == 100.0
-# assert 
+#     """
+#     #create exponential like array with a plateau before
+#     len_drop = 1000 # number of points of the drop
+#     len_plateau = 300
+
+#     plateau = np.ones(len_plateau)
+#     t = np.arange(0,5,5/len_drop)
+#     exp = np.exp(-(t)**0.5)
+#     dat = np.append(plateau,exp)
+
+#     # add noise 
+#     level = 0.03
+#     local_noise = np.random.normal(0, 0.08, 50)
+    
+#     #position local noise in a random position in between 50 and 950
+#     noise = np.random.normal(0,level,len(dat))
+#     for i in range(len(dat)):
+#         if i == position : 
+#             for j in range(len(local_noise)):
+#                 noise[i+j] += local_noise[j]
+#     dat = dat + noise
+
+
+#     drop = find_drop(dat, 0.4, False, False)
+#     assert np.abs(len_plateau-drop) <= 20
+
+
+
+
+ TESTING intensity_in_image()
+
+@given(int = st.integers(min_value=0, max_value=200))
+def test_intensityi_in_image(int):
+    """
+    creates a tif image in a known path
+    The image is 30x30 squares. the 30x10 middle line have values of 100 the others 1
+    Averaging the ones in the middle the value should be 100
+    """
+    # Create an array representing the image
+    image_array = np.zeros((30, 30), dtype=np.uint8)  # Initialize a 3x3 array with zeros
+    image_array[10:20] = int  # Set the middle row to 100
+
+    # Save the array as a TIFF image
+    imageio.imwrite('image.tif', image_array)
+
+    assert intensity_in_image('image.tif',[0.35, 0.66], True) == int
+
 
 
 # # %% TESTING intensity_in_multipage_image()

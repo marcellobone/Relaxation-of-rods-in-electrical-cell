@@ -37,11 +37,12 @@ def find_drop(I,threshold_perc,plot_deriv,plot_begin) : # finds the beginning of
     # smoothening data to have cleaner derivative
     I_smooth = []
     d = 5
-    for i in range(d,len(I)-d-1) : 
-        I_smooth.append(( np.mean(I[i-d:i+d+1])))
+    
+    for i in range(d+1,len(I)-d-1) : 
+        I_smooth.append(( np.mean(I[i-d+1:i+d+1])))
     
    
-    #plt.plot(frames,I,marker = '.')      
+    #plt.plot(I,marker = '.')      
     #plt.plot(I_smooth)
     #plt.show()
 
@@ -52,14 +53,16 @@ def find_drop(I,threshold_perc,plot_deriv,plot_begin) : # finds the beginning of
 
     begin_drop = 0
 
-    threshold = -threshold_perc*max(np.abs(derivative[5:int( 0.5*len(derivative) )])) # the 5 and 30 are there because it happens that there are weird artifacts at the first and last frames
+    threshold = -threshold_perc*max(np.abs(derivative)) 
     possible_peak = []
-    for d in range(10,int(len(derivative)/2)):
+    dist = int( 0.15*len(derivative) )
+    for d in range(10,len(derivative)-dist):
         if (derivative[d]) < threshold :
             possible_peak.append(d)
-    print(possible_peak)
+    #print(possible_peak)
+   
     for pp in possible_peak:
-        if np.abs( I[pp]- I_smooth[pp+50] ) > np.abs( I[begin_drop] - I_smooth[begin_drop+50] ): 
+        if np.abs( I[pp]- I_smooth[pp+dist] ) > np.abs( I[begin_drop] - I_smooth[begin_drop+dist] ): 
             begin_drop = pp
             
             
@@ -73,6 +76,7 @@ def find_drop(I,threshold_perc,plot_deriv,plot_begin) : # finds the beginning of
 
     if plot_deriv == True :
         plt.plot(derivative , marker = '.')
+        plt.axhline(threshold, color = 'r' )
         plt.title('derivative')
         plt.grid('minor')
         plt.show()
