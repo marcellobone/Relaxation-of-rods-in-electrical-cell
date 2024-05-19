@@ -47,22 +47,22 @@ def find_drop(I,threshold_perc,plot_deriv,plot_begin) : # finds the beginning of
     #plt.show()
 
     derivative = np.gradient(I_smooth)
-    derivative = [ min(derivative[i],0) for i in range(len(derivative)) ]
+    derivative = [ min(derivative[i],0) for i in range(len(derivative)) ] #remove positive values
    
-    # find the begin of drop l;ooking at the derivative
+    # find the begin of drop looking at the derivative
 
     begin_drop = 0
 
     threshold = -threshold_perc*max(np.abs(derivative)) 
     possible_peak = []
-    dist = int( 0.15*len(derivative) )
-    for d in range(10,len(derivative)-dist):
+    dist = int( 0.015*len(derivative) )
+    for d in range(10,len(derivative)-dist) :
         if (derivative[d]) < threshold :
             possible_peak.append(d)
     #print(possible_peak)
    
-    for pp in possible_peak:
-        if np.abs( I[pp]- I_smooth[pp+dist] ) > np.abs( I[begin_drop] - I_smooth[begin_drop+dist] ): 
+    for pp in possible_peak :
+        if np.abs( I[pp]- I_smooth[pp+dist] ) > np.abs( I[begin_drop] - I_smooth[begin_drop+dist] ) : 
             begin_drop = pp
             
             
@@ -111,7 +111,7 @@ def intensity_in_image(path, height_delimeter, show_patch) : # calculate the int
         width, height = par_pol.size
         width-=1
         height-=1
-        print(f'w = {width}   h = {height}')
+        #print(f'w = {width}   h = {height}')
         # Define the region of interest (ROI) coordinates (left, upper, right, lower)
         roi_coordinates = (0, int(height_delimeter[0]*height) , width , int(height_delimeter[1]*height ))
         
@@ -277,3 +277,4 @@ def weighted_avg_and_std(values, weights): #perform weighted average
     # Fast and numerically precise:
     variance = np.average((values-average)**2, weights=weights)
     return (average, np.sqrt(variance))
+
