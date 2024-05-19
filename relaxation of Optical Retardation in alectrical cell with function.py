@@ -45,7 +45,7 @@ height_delimeters = [.2, .6]
 I_0 = 10*intensity_in_image(par_pol_path, height_delimeters, show_patch)
 time_of_recording = 5 #in seconds s
 #PARAMETERS for find_drop: (see function description)
-threshold = 0.5 #threshold in percentage to find drop higher for noisy data
+threshold = 0.3 #threshold in percentage to find drop higher for noisy data
 
 # %%
 n = 0
