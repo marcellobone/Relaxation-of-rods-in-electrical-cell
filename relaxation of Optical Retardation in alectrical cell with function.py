@@ -8,7 +8,7 @@ from scipy.optimize import curve_fit
 import os
 import glob
 from functions import *
-
+from tkinter import filedialog
 
 def st_exponential(x, b, alpha): # stretched exponential
      return a_0 * np.exp( -(b * x)**alpha) + c_0 # a_0 and c_0 are defined later in the code
@@ -17,12 +17,12 @@ def st_exponential(x, b, alpha): # stretched exponential
 # %%
 
 ########### DATASET Specify the file path
-
-par_pol_path = 'C:\\Users\\marc3\\OneDrive\\Documents\\INTERNSHIP-PHD\\4-16-24 MB03x100 ph4.5\\img0.tif'  # replace with the actual file path
-
-## The 
 # Specify the folder path where the files are located
-folder_path = 'C:\\Users\\marc3\\OneDrive\\Documents\\INTERNSHIP-PHD\\4-16-24 MB03x100 ph4.5\\5sec 5V 1MHz\\example data biref'  # Update with the actual path
+folder_path = filedialog.askdirectory()  
+image_par_pol_filename = 'img0.tif'
+par_pol_path = os.path.join(folder_path,image_par_pol_filename)  
+
+
 
 # Define the pattern for file names 
 file_pattern = 'relax*.tif'        
