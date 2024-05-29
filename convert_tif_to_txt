@@ -1,0 +1,39 @@
+import numpy as np
+import cv2
+from PIL import Image
+import matplotlib.pyplot as plt
+import matplotlib.patches as patches
+from scipy.optimize import curve_fit
+import os
+import glob
+from functions import *
+from tkinter import filedialog
+
+folder_path = filedialog.askdirectory()  
+image_par_pol_filename = 'img0.tif'
+par_pol_path = os.path.join(folder_path,image_par_pol_filename)  
+
+
+
+# Define the pattern for file names 
+file_pattern = 'relax*.tif'        
+
+# Create the full path pattern
+full_path_pattern = os.path.join(folder_path, file_pattern)
+
+# Use glob to find all files that match the pattern
+file_paths = glob.glob(full_path_pattern)
+
+height_delimeters = [.45, .55]
+
+for file_path in file_paths:
+    
+    I = intensity_in_multipage_image(file_path, height_delimeters)
+    txt_file_name = os.path.splitext(os.path.basename(file_path)) #is used in the function
+    txt_file_name = txt_file_name [0] + '.txt'
+    txt_file_path = os.path.join(folder_path, txt_file_name)
+    with open(txt_file_path, 'w') as file:
+        for value in I:
+         file.write(f"{value}\n")
+    print(txt_file_name,' completed')
+    

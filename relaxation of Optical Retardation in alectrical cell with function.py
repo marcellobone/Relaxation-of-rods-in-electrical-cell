@@ -16,6 +16,9 @@ def st_exponential(x, b, alpha): # stretched exponential
 
 # %%
 
+TXT_MODE = True # if True skips the reading tifs and rreads the txt files insteaad
+
+
 ########### DATASET Specify the file path
 # Specify the folder path where the files are located
 folder_path = filedialog.askdirectory()  
@@ -23,10 +26,12 @@ image_par_pol_filename = 'img0.tif'
 par_pol_path = os.path.join(folder_path,image_par_pol_filename)  
 
 
-
-# Define the pattern for file names 
-file_pattern = 'relax*.tif'        
-
+if TXT_MODE == False:
+    # Define the pattern for file names 
+    file_pattern = 'relax*.tif'        
+if TXT_MODE == True:
+    # Define the pattern for file names 
+    file_pattern = 'relax*.txt'  
 # Create the full path pattern
 full_path_pattern = os.path.join(folder_path, file_pattern)
 
@@ -37,15 +42,16 @@ file_paths = glob.glob(full_path_pattern)
 ############ PARAMETERS and settings
 ### GENERAL (also parallel pol) #########
 show_patch           = True   #plugged in the intensity_in_image function
-visualize_derivative = True   #plugged in the find_drop function
-visualize_drop       = True   #plugged in the find_drop function
+visualize_derivative = False   #plugged in the find_drop function
+visualize_drop       = False   #plugged in the find_drop function
 visualize_dataset    = False   #to visualize the data nd verify the automatic measure worked
 visualize_fit        = True   #pluggd in the perform_exp_fit function
-height_delimeters = [.2, .6]
+height_delimeters = [.45, .55]
 I_0 = 10*intensity_in_image(par_pol_path, height_delimeters, show_patch)
 time_of_recording = 5 #in seconds s
 #PARAMETERS for find_drop: (see function description)
 threshold = 0.3 #threshold in percentage to find drop higher for noisy data
+
 
 # %%
 n = 0
@@ -60,10 +66,13 @@ for file_path in file_paths:
     
     print('examining ',file_path, f'\n{num} {num} {num} {num} {num} {num} {num} {num} {num}')
     
-    ### SPECIFIC TO SINGLE RELAXATION #######    
-    I = intensity_in_multipage_image(file_path, height_delimeters)
+    ### SPECIFIC TO SINGLE RELAXATION #######   
+    if TXT_MODE == True :
+        I = np.loadtxt(file_path,  delimiter='\t', usecols=(0), unpack=True)
+    if TXT_MODE == False:
+        I = intensity_in_multipage_image(file_path, height_delimeters)
     frames = np.arange(len(I))
-    fps = len(I)/5
+    fps = len(I)/time_of_recording
 
     #visualize dataset to verify it's good
     if visualize_dataset == True:    
@@ -74,7 +83,7 @@ for file_path in file_paths:
     # change frames to time and I to optical retardation
     t = frames/fps
     OR = np.arcsin(np.sqrt(I/I_0)) # if you want to keep I just comment this
-    OR = OR / np.mean(OR[1:50]) # to normalize OR !NOTE it can be too long for little fps!
+    OR = OR / np.mean(OR[1:10]) # to normalize OR !NOTE it can be too long for little fps!
     #OR = I
 
 
@@ -83,7 +92,7 @@ for file_path in file_paths:
 
     fit_len = int(0.6 * (len(OR) - begin_drop ))  #lenght of the fit
     b_0 = 10
-    c_0 = np.mean(OR[len(OR)-30:len(OR)-25] )  #OR[len(OR)-1] OR[begin_drop+fit_len]  max(OR)
+    c_0 = np.mean(OR[len(OR)-10:len(OR)] )  #OR[len(OR)-1] OR[begin_drop+fit_len]  max(OR)
     a_0 = np.mean(OR[1:begin_drop] ) - c_0
 
     ##############################################################
@@ -94,7 +103,7 @@ for file_path in file_paths:
     title = os.path.splitext(os.path.basename(file_path)) #is used in the function
     title = title [0]
     savepath =  os.path.join(folder_path, title)
-    [d, a, err_d, err_a] = perform_st_exp_fit(t,OR,begin_drop,fit_len,st_exponential,visualize_fit,fps,title) # d and a are D and alpha
+    [d, a, err_d, err_a] = perform_st_exp_fit(t,OR,begin_drop,fit_len,st_exponential,visualize_fit,fps,title,savepath) # d and a are D and alpha
     D.append(d)
     alpha.append(a)
     err_D.append(err_d)
@@ -110,7 +119,7 @@ print(r'$\alpha$ values are :', alpha)
 
 # plotting the final results  NOTE we use the fps of the last dataset because they should be similar
 for i in range(len(D)) :
-    t = (1/fps)*np.arange(500)
+    t = (1/fps)*np.arange(1000)
     st_exp = np.exp( -(6* (D[i]*t))**alpha[i])
     plt.plot(t,st_exp, alpha = 0.8 , label = rf' relax {[i]}')
     
@@ -154,3 +163,8 @@ ax2.legend(loc = 'lower right')
 plt.savefig(title_Da)
 plt.show()
 
+
+
+# %%
+
+# %%
