@@ -6,6 +6,9 @@ import matplotlib.patches as patches
 from scipy.optimize import curve_fit
 import os
 import glob
+import statsmodels.api as sm
+import matplotlib.pyplot as plt
+from scipy.stats import norm
 
 ########### FUNCTIONS 
 def find_drop(I,threshold_perc,plot_deriv,plot_begin) : # finds the beginning of the drop of the exponential-like dataset
@@ -191,7 +194,7 @@ def intensity_in_multipage_image(path,height_delimeter) : # finds the average in
        
     return(I)
 
-def perform_st_exp_fit(t,OR,begin_drop,fit_len, st_exponential, plot_fit, fps, title): # performs a fit with the stretched exponential function
+def perform_st_exp_fit(t,OR,begin_drop,fit_len, st_exponential, plot_fit, fps, title,savepath): # performs a fit with the stretched exponential function
     """
     Performs a exponential fit of form exp(-(bt)**alpha)
 
@@ -204,6 +207,7 @@ def perform_st_exp_fit(t,OR,begin_drop,fit_len, st_exponential, plot_fit, fps, t
         plot_fit --boolean True for plotting }
         fps --float fps of the recording     } only relevant if plotting
         title --string title  of plot        }
+        savepath --string path to save fig   }
 
     Outputs fitted values:
      list containing:
@@ -244,7 +248,7 @@ def perform_st_exp_fit(t,OR,begin_drop,fit_len, st_exponential, plot_fit, fps, t
     
     if plot_fit == True:
         D = f"{b_fit/6:.3f}"
-        plt.plot(t[begin_drop-100:begin_drop+fit_len+150],OR[begin_drop-100:begin_drop+fit_len+150], marker = '.', linestyle = 'none')
+        plt.plot(t[begin_drop-int(begin_drop/2):begin_drop+fit_len+int((len(t)-fit_len)/2)],OR[begin_drop-int(begin_drop/2):begin_drop+fit_len+int((len(t)-fit_len)/2)], marker = '.', linestyle = 'none')
         
         # Plot error bands around the fitted curve for b_fit and alpha_fit
         num_curves = 100
@@ -254,13 +258,14 @@ def perform_st_exp_fit(t,OR,begin_drop,fit_len, st_exponential, plot_fit, fps, t
             plt.plot(t_fit + (begin_drop+1)/fps, perturbed_curve, color='orange')
 
         plt.plot(t_fit + (begin_drop+1)/fps, fit_curve, color='red', label=rf' D={D}  $\alpha$={f"{alpha_fit:.3f}"} ')
-        
         plt.xlabel('time [s]')
         plt.ylabel('optical retardation')
         plt.legend(loc = 'best')
         plt.grid()
         plt.title(title)
+        plt.savefig(savepath)
         plt.show()
+        
 
     return([b_fit/6, alpha_fit, err_b/6, err_alpha])
 
@@ -277,4 +282,45 @@ def weighted_avg_and_std(values, weights): #perform weighted average
     # Fast and numerically precise:
     variance = np.average((values-average)**2, weights=weights)
     return (average, np.sqrt(variance))
+
+
+
+
+def fit_dist(bins,hist_values, degree):
+    
+    
+    cum_dist = np.cumsum(hist_values)
+
+    # Generate corresponding x values (assuming equally spaced)
+    x = np.arange(len(cum_dist))
+
+    # Fit a polynomial of the specified degree to the data
+    coefficients = np.polyfit(x, cum_dist, degree)
+
+    # Create a polynomial object
+    polynomial = np.poly1d(coefficients)
+
+    # Generate x values for plotting the fit
+    x_fit = np.linspace(x.min(), x.max(), 1000)
+    fit_cum_dist = polynomial(x_fit)
+
+    # Plot the original data
+    plt.scatter(x, cum_dist, label='Data')
+
+    # Plot the polynomial fit
+    plt.plot(x_fit, fit_cum_dist, label=f'Polynomial Fit (degree {degree})', color='red')
+
+    plt.xlabel('x')
+    plt.ylabel('y')
+    plt.legend()
+    plt.title('Polynomial Fit to Data')
+    plt.show()
+
+    dist = np.diff(fit_cum_dist)
+
+    plt.hist(hist_values,len(bins), density = True)
+    plt.plot(x,dist*max(hist_values)/max(dist))
+    plt.show()
+    return(dist)
+    
 
