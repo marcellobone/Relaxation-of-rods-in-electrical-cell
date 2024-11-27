@@ -147,6 +147,15 @@ def intensity_in_image(path, height_delimeter, show_patch) : # calculate the int
 
         return(I_0) 
 
+def intensity_mat(path):
+    with Image.open(path) as par_pol :
+    
+        # Convert the ROI to a NumPy array for intensity analysis
+        I = np.array(par_pol)
+
+        return(I) 
+
+
 def intensity_in_multipage_image(path,height_delimeter) : # finds the average intensity inside a ROI of a multipage tif and makes a array with the value
     
     """
@@ -221,7 +230,7 @@ def perform_st_exp_fit(t,OR,begin_drop,fit_len, st_exponential, plot_fit, fps, t
     t_fit = t[begin_drop : begin_drop + fit_len]-t[begin_drop]
     OR_fit = OR[begin_drop : begin_drop + fit_len] #- OR[len(OR)-1]
 
-    initial_guesses = [1, 1]
+    initial_guesses = [10, 1]
 
     # Perform the exponential fit on the subset
     params, covariance = curve_fit(st_exponential, t_fit, OR_fit,maxfev = 50000, p0=initial_guesses)
