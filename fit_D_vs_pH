@@ -1,0 +1,23 @@
+# %%
+import numpy as np
+import cv2
+from PIL import Image
+import matplotlib.pyplot as plt
+import matplotlib.patches as patches
+from scipy.optimize import curve_fit
+import os
+import glob
+from functions import *
+from tkinter import filedialog
+# %%
+
+molarity_NOH = [0, 3.8, 11.4, 19, 27, 42.5, 85, 171]
+D = [0.06445018365395774, 0.18378937729289752, 0.5993924063666787, 1.7771389782248834 , 7.394220437802154, 5.209379040116616 ,2.7217201711605714, 1.9312401824600094  ]
+err_D = [ 0.001678649886854258655498436, 0.02897379620883791,  0.06086071186457805, 0.18625291497901186 ,0.19323894447623138, 0.1613492931503945, 4.440892098500626e-16, 0.17455604390415885]
+
+plt.plot((molarity_NOH), D, 'o', label='D vs pH')
+plt.errorbar((molarity_NOH), D, yerr=err_D, fmt='o', label='Error bars')
+plt.xlabel('C(HNO3) in EG (M)')
+plt.ylabel('D (1/s)')
+plt.grid()
+plt.show()

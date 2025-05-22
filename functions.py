@@ -9,13 +9,13 @@ import glob
 import statsmodels.api as sm
 import matplotlib.pyplot as plt
 from scipy.stats import norm
-
+from matplotlib.widgets import Slider
 ########### FUNCTIONS 
 def find_drop(I,threshold_perc,plot_deriv,plot_begin) : # finds the beginning of the drop of the exponential-like dataset
     """
     the function first smoothens the data in order to reduce noise. 
     It does this by averaging every point with its first d neighbours.
-    d is a fixed parameter inn the function
+    d is a fixed parameter in the function
     Then a threshold is set to be 10% of the maximum peak. This can need to be changed in
     very noisy datasets ot datasets with some aberration.
     At every peak lower than the threshold the function cheks if there is an 
@@ -230,10 +230,11 @@ def perform_st_exp_fit(t,OR,begin_drop,fit_len, st_exponential, plot_fit, fps, t
     t_fit = t[begin_drop : begin_drop + fit_len]-t[begin_drop]
     OR_fit = OR[begin_drop : begin_drop + fit_len] #- OR[len(OR)-1]
 
-    initial_guesses = [10, 1]
-
+    initial_guesses = [17, 0.2]
+    lower_bounds = [-np.inf, -np.inf]
+    upper_bounds = [np.inf, 1]
     # Perform the exponential fit on the subset
-    params, covariance = curve_fit(st_exponential, t_fit, OR_fit,maxfev = 50000, p0=initial_guesses)
+    params, covariance = curve_fit(st_exponential, t_fit, OR_fit,maxfev = 50000, p0=initial_guesses, bounds=(lower_bounds, upper_bounds))
 
     # Extract the fitted parameters
     b_fit, alpha_fit = params
@@ -260,13 +261,13 @@ def perform_st_exp_fit(t,OR,begin_drop,fit_len, st_exponential, plot_fit, fps, t
         plt.plot(t[begin_drop-int(begin_drop/2):begin_drop+fit_len+int((len(t)-fit_len)/2)],OR[begin_drop-int(begin_drop/2):begin_drop+fit_len+int((len(t)-fit_len)/2)], marker = '.', linestyle = 'none')
         
         # Plot error bands around the fitted curve for b_fit and alpha_fit
-        num_curves = 100
-        perturbed_params = np.random.multivariate_normal(params, covariance, num_curves)
-        for i in range(num_curves):
-            perturbed_curve = st_exponential(t_fit, *perturbed_params[i])
-            plt.plot(t_fit + (begin_drop+1)/fps, perturbed_curve, color='orange')
+        #num_curves = 100
+        #perturbed_params = np.random.multivariate_normal(params, covariance, num_curves)
+        #for i in range(num_curves):
+         #   perturbed_curve = st_exponential(t_fit, *perturbed_params[i])
+          #  plt.plot(t_fit + (begin_drop+1)/fps, perturbed_curve, color='orange')
 
-        plt.plot(t_fit + (begin_drop+1)/fps, fit_curve, color='red', label=rf' D={D}  $\alpha$={f"{alpha_fit:.3f}"} ')
+        plt.plot(t_fit + (begin_drop)/fps, fit_curve, color='red', label=rf' D={D}  $\alpha$={f"{alpha_fit:.3f}"} ')
         plt.xlabel('time [s]')
         plt.ylabel('optical retardation')
         plt.legend(loc = 'best')
@@ -333,3 +334,62 @@ def fit_dist(bins,hist_values, degree):
     return(dist)
     
 
+def interactive_fit(x_data, y_data, x_offset, a0, D0, alpha0, c0):
+    """
+    Create an interactive plot with sliders to adjust parameters of the model function.
+    """
+    # Define the model function
+    def st_exponential(x, a,D,c,alpha): # stretched exponential
+         return a * np.exp( -((6*D) * x)**alpha) + c
+        
+
+
+    # Create the plot
+    fig, ax = plt.subplots()
+    plt.subplots_adjust(left=0.25, bottom=0.35)
+
+    # Plot dataset
+    scatter = ax.scatter(x_data-x_offset, y_data, label='Data', color='gray')
+
+    # Plot initial model
+    model_line, = ax.plot(x_data, st_exponential(x_data, a0, D0, c0, alpha0), label='Model', color='red')
+
+    ax.set_xlabel('x')
+    ax.set_ylabel('y')
+    ax.legend()
+
+    # Define sliders for parameters
+    a_slider_ax = fig.add_axes([0.25, 0.25, 0.65, 0.03])
+    D_slider_ax = fig.add_axes([0.25, 0.20, 0.65, 0.03])
+    c_slider_ax = fig.add_axes([0.25, 0.15, 0.65, 0.03])
+    alpha_slider_ax = fig.add_axes([0.25, 0.10, 0.65, 0.03])
+
+    a_slider = Slider(a_slider_ax, 'a', 0.0001, 0.05, valinit=a0)
+    D_slider = Slider(D_slider_ax, 'D', 0.1, 50, valinit=D0)
+    c_slider = Slider(c_slider_ax, 'c', 0, 0.05, valinit=c0)
+    alpha_slider = Slider(alpha_slider_ax, 'alpha', 0.01, 1, valinit=a0)
+    # Update function for sliders
+    def update(val):
+        a = a_slider.val
+        D = D_slider.val
+        c = c_slider.val
+        alpha = alpha_slider.val
+
+        model_line.set_ydata(st_exponential(x_data, a, D, c, alpha))
+        fig.canvas.draw_idle()
+
+    # Connect sliders to update function
+    a_slider.on_changed(update)
+    D_slider.on_changed(update)
+    c_slider.on_changed(update)
+    alpha_slider.on_changed(update)
+
+    plt.xlim(0, max(  x_data - x_offset))
+
+    plt.show()
+
+    print('a = ', a_slider.val)
+    print('D = ', D_slider.val) 
+    print('c = ', c_slider.val)
+    print('alpha = ', alpha_slider.val)
+    return a_slider.val, D_slider.val, c_slider.val, alpha_slider.val

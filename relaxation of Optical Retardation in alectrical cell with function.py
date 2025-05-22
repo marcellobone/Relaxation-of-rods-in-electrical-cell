@@ -9,6 +9,7 @@ import os
 import glob
 from functions import *
 from tkinter import filedialog
+from matplotlib.widgets import Slider
 
 def st_exponential(x, b, alpha): # stretched exponential
      return a_0 * np.exp( -(b * x)**alpha) + c_0 # a_0 and c_0 are defined later in the code
@@ -22,16 +23,16 @@ TXT_MODE = False # if True skips the reading tifs and rreads the txt files inste
 ########### DATASET Specify the file path
 # Specify the folder path where the files are located
 folder_path = filedialog.askdirectory() #'C:/Users/marc3/OneDrive/Documents/INTERNSHIP-PHD/5-28-24 EG in oe cell'#filedialog.askdirectory()  
-image_par_pol_filename = 'img0.tif'
+image_par_pol_filename = 'img0_65us.tif'
 par_pol_path = os.path.join(folder_path,image_par_pol_filename)  
 dark_image_path = os.path.join(folder_path,'img_dark0.tif')
 
 if TXT_MODE == False:
     # Define the pattern for file names 
-    file_pattern = 'relax*.tif'        
+    file_pattern = 'T*.tif'        
 if TXT_MODE == True:
     # Define the pattern for file names 
-    file_pattern = 'relax*.txt'  
+    file_pattern = 'T*.txt'  
 # Create the full path pattern
 full_path_pattern = os.path.join(folder_path, file_pattern)
 
@@ -42,18 +43,18 @@ file_paths = glob.glob(full_path_pattern)
 ############ PARAMETERS and settings
 ### GENERAL (also parallel pol) #########
 show_patch           = True   #plugged in the intensity_in_image function
-visualize_derivative = False   #plugged in the find_drop function
-visualize_drop       = False   #plugged in the find_drop function
-visualize_dataset    = True   #to visualize the data nd verify the automatic measure worked
+visualize_derivative = True   #plugged in the find_drop function
+visualize_drop       = True   #plugged in the find_drop function
+visualize_dataset    = False   #to visualize the data nd verify the automatic measure worked
 visualize_fit        = True   #pluggd in the perform_exp_fit function
 dark_image           = False
-height_delimeters = [.45, .65]
-I_0 = 10000*intensity_in_image(par_pol_path, height_delimeters, show_patch)
-time_of_recording = 22 #in seconds s
+height_delimeters = [.4, .6]
+I_0 = (200)*intensity_in_image(par_pol_path, height_delimeters, show_patch)
+time_of_recording = 20 #in seconds s
 #PARAMETERS for find_drop: (see function description)
-threshold = 0.3 #threshold in percentage to find drop higher for noisy data
+threshold = 0.999 #threshold in percentage to find drop higher for noisy data
 
-
+print('I_0 = ',I_0)
 # %%
 n = 0
 D = []
@@ -82,6 +83,8 @@ for file_path in file_paths:
     frames = np.arange(len(I))
     fps = len(I)/time_of_recording
 
+    
+
     #visualize dataset to verify it's good
     if visualize_dataset == True:    
         plt.plot(frames,I,marker = '.')
@@ -89,8 +92,8 @@ for file_path in file_paths:
         plt.show()
 
     begin_drop = find_drop(I,threshold,visualize_derivative,visualize_drop) # pos in the array at which the drop starts
+    begin_drop=begin_drop+1
     print('drop begins at ',begin_drop ,' or ',begin_drop/fps,'s')
-
 
     # change frames to time and I to optical retardation
     t = frames/fps
@@ -99,15 +102,15 @@ for file_path in file_paths:
     # plt.plot(OR/np.mean(OR[1:10]))
     # OR[begin_drop:len(OR)] = OR[begin_drop:len(OR)] - correction_EG
     # OR[0:begin_drop-1] = OR[0:begin_drop-1]-0.001
-    OR = OR / np.mean(OR[1:10]) # to normalize OR !NOTE it can be too long for little fps!
+    #OR = OR / np.mean(OR[1:10]) # to normalize OR !NOTE it can be too long for little fps!
     
    
 
 
-    fit_len = int(0.6* (len(OR) - begin_drop ))  #lenght of the fit
+    fit_len = int(0.5* (len(OR) - begin_drop ))  #lenght of the fit
     b_0 = 10
     if dark_image == False:
-        c_0 = min(OR)#np.mean(OR[len(OR)-10:len(OR)] )  #OR[len(OR)-1] OR[begin_drop+fit_len]  max(OR)
+        c_0 = np.mean(OR[begin_drop+fit_len:begin_drop+fit_len+50] )  #OR[len(OR)-1] OR[begin_drop+fit_len]  max(OR)
     if dark_image == True:
         I_dark = intensity_in_image(dark_image_path, height_delimeters, False)
         c_0 = np.arcsin(np.sqrt(I_dark/I_0))
@@ -115,7 +118,7 @@ for file_path in file_paths:
         plt.plot(I)
         plt.axhline(I_dark)
         plt.show()
-    a_0 = np.mean(OR[begin_drop-3:begin_drop] ) - c_0
+    a_0 = np.mean(OR[begin_drop-5:begin_drop-1] ) - c_0 #begin_drop-3:
 
 
     ##############################################################
@@ -132,11 +135,13 @@ for file_path in file_paths:
     err_D.append(err_d)
     err_alpha.append(err_a)
     
+    interactive_values = interactive_fit(t,OR, (begin_drop)/fps, a_0,d,a,c_0)
+
     num += 1
     print('\n')
     
 
-print('D values are :', D)
+print('D values are :', D, 'errD : ', err_D)	
 print(r'$\alpha$ values are :', alpha)
 
 
@@ -188,19 +193,6 @@ plt.show()
 
 
 
-# %%
-minEG = 3646.9024
-maxEG = 4154.0588
-
-I_EG =   (maxEG-minEG)* np.exp( -(6*0.1346* np.arange(len(frames)-begin_drop)/fps)**0.5347) + minEG 
-OR_EG =  np.arcsin(np.sqrt(I_EG/219595.71264367815))
-OR_EG = OR_EG/max(OR_EG)
-
-plt.plot(OR[begin_drop:len(frames)]-min(OR), label = 'I')
-plt.plot(OR_EG-min(OR_EG), label = 'EG')
-plt.plot()
-plt.legend()
-plt.show()
 # %% create file with useful things
 resultfilename = 'results.txt'
 resultfile_path = os.path.join(folder_path,resultfilename)

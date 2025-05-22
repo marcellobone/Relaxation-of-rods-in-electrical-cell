@@ -24,7 +24,7 @@ def D_marci(l,AR) :
     D = (3*kT)/(2*np.pi*eta*l**3)*(-1+2*np.log(2*AR))
     return D
 
-lengths = np.linspace(20,200,1500)
+lengths = 200 #np.linspace(20,200,1500)
 
 ar = 25
 D_q = D_qilin(lengths,ar)
@@ -38,3 +38,4 @@ plt.legend()
 plt.grid('both')
 plt.show()
 
+print(D_m, D_q)
